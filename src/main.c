@@ -1,5 +1,6 @@
-#include "ftp.h"
+#include "smtp.h"
 #include "socks.h"
+
 #include <assert.h>
 #include <stdio.h>
 #include <unistd.h>

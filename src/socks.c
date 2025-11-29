@@ -30,26 +30,3 @@ fd_t create_connected_socket(struct sockaddr_in const * ip_info)
 
 	return sock;
 }
-
-// fd_t create_listen_socket(struct sockaddr_in const * ip_info)
-// {
-// 	// Входящий сокет
-// 	fd_t serv_sock = socket(AF_INET, SOCK_STREAM, 0);
-// 	if (serv_sock == -1)
-// 		return -1;
-//
-// 	// Соединение сокета с портом и адресом
-// 	if (bind(serv_sock, (struct sockaddr const *)ip_info,
-// 		 sizeof(*ip_info))) {
-// 		close(serv_sock);
-// 		return -1;
-// 	}
-//
-// 	// Создание очереди запросов на соединение
-// 	if (listen(serv_sock, 100)) {
-// 		close(serv_sock);
-// 		return -1;
-// 	}
-//
-// 	return serv_sock;
-// }
