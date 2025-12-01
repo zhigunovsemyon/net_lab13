@@ -44,26 +44,6 @@ int main()
 		goto end;
 	}
 
-	/*
-		int login_bad = login(conn_sock);
-		if (login_bad == -1) {
-			perror("login failed");
-			close(conn_sock);
-			return 1;
-		} else if (login_bad == -2) {
-			fprintf(stderr, "Неверный пароль\n");
-			close(conn_sock);
-			return 1;
-		}
-
-		int communication_cycle_bad = communication_cycle(conn_sock);
-		if (communication_cycle_bad < 0) {
-			perror("cycle failed");
-			close(conn_sock);
-			return 1;
-		}
-	*/
-
 	comm_err = COMMERR_OK;
 
 end:
