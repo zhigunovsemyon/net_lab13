@@ -12,24 +12,25 @@
 constexpr in_port_t DEFAULT_PORT = 25;
 
 static char const * CONNECT_OK_CODE = "220";
+static char const * COMMAND_OK_CODE = "250";
 
-bool check_connection_response(fd_t fd)
+CommErr check_connection_response(fd_t fd)
 {
 	char buf[99];
 
 	ssize_t recieved = recv(fd, buf, sizeof(buf), 0);
 	if (recieved < 0) {
-		return true;
+		return COMMERR_BAD_SERVER_HELLO;
 	}
 
 	buf[recieved] = '\0';
 	puts(buf);
 
 	if (strncmp(buf, CONNECT_OK_CODE, strlen(CONNECT_OK_CODE))) {
-		return true;
+		return COMMERR_BAD_SERVER_HELLO;
 	}
 
-	return false;
+	return COMMERR_OK;
 }
 
 int set_destination(struct sockaddr_in * addr_to_set)
@@ -65,6 +66,11 @@ int set_destination(struct sockaddr_in * addr_to_set)
 		return -1;
 
 	return 0;
+}
+
+CommErr send_sender_and_recipient(fd_t)
+{
+
 }
 /*
 static int quit(fd_t cmd_sock)

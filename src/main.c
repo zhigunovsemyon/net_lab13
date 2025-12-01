@@ -34,7 +34,7 @@ int main()
 		return -1;
 	}
 
-	if (check_connection_response(conn_sock)) {
+	if (COMMERR_OK != check_connection_response(conn_sock)) {
 		fprintf(stderr, "Ошибка при подключении к серверу!");
 		close(conn_sock);
 		return 1;

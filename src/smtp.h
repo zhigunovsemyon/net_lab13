@@ -2,12 +2,17 @@
 #define SMTP_H_
 #include "socks.h"
 
+typedef enum {
+	COMMERR_OK,
+	COMMERR_BAD_SERVER_HELLO,
+	COMMERR_BAD_MAIL_SOURCE,
+	COMMERR_BAD_MAIL_DEST,
+} CommErr;
+
 int set_destination(struct sockaddr_in * addr_to_set);
 
-int communication_cycle(fd_t fd);
+CommErr check_connection_response(fd_t fd);
 
-int login(fd_t fd);
-
-bool check_connection_response(fd_t fd);
+CommErr send_sender_and_recipient(fd_t);
 
 #endif // !SMTP_H_
