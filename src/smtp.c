@@ -20,6 +20,41 @@ static char const * CONNECT_OK_CODE = "220";
 static char const * COMMAND_OK_CODE = "250";
 static char const * DATA_TRANSFER_CONFIRMED = "354";
 
+[[maybe_unused]]
+static size_t make_random_line(char * buf, size_t max_line_len)
+{
+	for (size_t i = 0; i < max_line_len; ++i) {
+		buf[i] = (char)(rand() % (127 - 33));
+		if (buf[i] == 0) {
+			return i;
+		}
+		buf[i] += 32;
+	}
+
+	return max_line_len;
+}
+
+static CommErr send_random_data(fd_t fd)
+{
+	constexpr size_t max_line_len = 100;
+	constexpr int max_line_count = 10;
+
+	char buf[max_line_len + 1];
+	buf[max_line_len] = '\0';
+
+	int lines = rand() % max_line_count;
+	for (int i = 0; i < lines; ++i) {
+		make_random_line(buf, max_line_len);
+		if (send(fd, buf, strlen(buf), 0) < 0) {
+			return COMMERR_SEND;
+		}
+		if (send(fd, CRLF, strlen(CRLF), 0) < 0) {
+			return COMMERR_SEND;
+		}
+	}
+	return COMMERR_OK;
+}
+
 static CommErr check_data_send_responce(fd_t fd)
 {
 	constexpr size_t buflen = 99;
@@ -85,10 +120,15 @@ CommErr send_data(fd_t fd, char const * data[], size_t lines)
 			return COMMERR_SEND;
 		}
 	}
+	res = send_random_data(fd);
+	if (res != COMMERR_OK) {
+		return res;
+	}
 
 	if (send(fd, DATA_END, strlen(DATA_END), 0) < 0) {
 		return COMMERR_SEND;
 	}
+
 	return check_data_send_responce(fd);
 }
 

@@ -3,6 +3,8 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 /*
@@ -18,15 +20,20 @@
  */
 
 char const * data[] = {
-	"Date: Wed, 30 July 2019 06:04:34", //
-	"From: test@client.net",	    //
-	"Subject: How SMTP works",	    //
-	"To: user@recipient.net",	    //
-	"Body text"			    //
+	"Date: Tue, 02 Dec 2025 12:04:34", //
+	"From: support@apple.com",	   //
+	"Subject: Розыгрыш iPhone 3GS",	   //
+	"To: user1@localdomain",	   //
+	"Для получения отправьте ваш номер банковской карты, её срок действия ",
+	"и CVC код на следующий почтовый адрес:", //
+	"notascam@disposabledomain.io",		  //
+	"Случайные символы:"			  //
 };
 
 int main()
 {
+	srand((unsigned int)time(NULL));
+
 	// Структура с адресом и портом сервера
 	struct sockaddr_in server_addr;
 
