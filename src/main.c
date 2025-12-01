@@ -34,6 +34,12 @@ int main()
 		return -1;
 	}
 
+	if (check_connection_response(conn_sock)) {
+		fprintf(stderr, "Ошибка при подключении к серверу!");
+		close(conn_sock);
+		return 1;
+	}
+/*
 	int login_bad = login(conn_sock);
 	if (login_bad == -1) {
 		perror("login failed");
@@ -51,7 +57,7 @@ int main()
 		close(conn_sock);
 		return 1;
 	}
-
+*/
 	// Штатное завершение работы
 	puts("Клиент прервал соединение");
 	close(conn_sock);

@@ -8,4 +8,6 @@ int communication_cycle(fd_t fd);
 
 int login(fd_t fd);
 
+bool check_connection_response(fd_t fd);
+
 #endif // !SMTP_H_
