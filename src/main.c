@@ -34,32 +34,64 @@ int main()
 		return -1;
 	}
 
-	if (COMMERR_OK != check_connection_response(conn_sock)) {
+	CommErr comm_err = check_connection_response(conn_sock);
+	if (COMMERR_OK != comm_err) {
+		goto end;
+	}
+
+	comm_err = send_sender_and_recipient(conn_sock);
+	if (COMMERR_OK != comm_err) {
+		goto end;
+	}
+
+	/*
+		int login_bad = login(conn_sock);
+		if (login_bad == -1) {
+			perror("login failed");
+			close(conn_sock);
+			return 1;
+		} else if (login_bad == -2) {
+			fprintf(stderr, "Неверный пароль\n");
+			close(conn_sock);
+			return 1;
+		}
+
+		int communication_cycle_bad = communication_cycle(conn_sock);
+		if (communication_cycle_bad < 0) {
+			perror("cycle failed");
+			close(conn_sock);
+			return 1;
+		}
+	*/
+
+	comm_err = COMMERR_OK;
+
+end:
+	switch (comm_err) {
+	case COMMERR_OK:
+		puts("Завершение работы");
+		close(conn_sock);
+		return 0;
+	case COMMERR_BAD_SERVER_HELLO:
 		fprintf(stderr, "Ошибка при подключении к серверу!");
 		close(conn_sock);
 		return 1;
-	}
-/*
-	int login_bad = login(conn_sock);
-	if (login_bad == -1) {
-		perror("login failed");
+	case COMMERR_BAD_MAIL_SOURCE:
+		fprintf(stderr, "Ошибка при указании отправителя!");
 		close(conn_sock);
 		return 1;
-	} else if (login_bad == -2) {
-		fprintf(stderr, "Неверный пароль\n");
+	case COMMERR_BAD_MAIL_DEST:
+		fprintf(stderr, "Ошибка при указании получателя!");
+		close(conn_sock);
+		return 1;
+	case COMMERR_SEND:
+	case COMMERR_RECV:
+		perror("");
+		close(conn_sock);
+		return -1;
+	default:
+		fputs("Неизвестная ошибка!", stderr);
 		close(conn_sock);
 		return 1;
 	}
-
-	int communication_cycle_bad = communication_cycle(conn_sock);
-	if (communication_cycle_bad < 0) {
-		perror("cycle failed");
-		close(conn_sock);
-		return 1;
-	}
-*/
-	// Штатное завершение работы
-	puts("Клиент прервал соединение");
-	close(conn_sock);
-	return 0;
 }

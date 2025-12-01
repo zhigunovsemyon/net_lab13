@@ -6,11 +6,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
 
 constexpr in_port_t DEFAULT_PORT = 25;
 
+static char const * CRLF = "\r\n";
 static char const * CONNECT_OK_CODE = "220";
 static char const * COMMAND_OK_CODE = "250";
 
@@ -20,7 +22,7 @@ CommErr check_connection_response(fd_t fd)
 
 	ssize_t recieved = recv(fd, buf, sizeof(buf), 0);
 	if (recieved < 0) {
-		return COMMERR_BAD_SERVER_HELLO;
+		return COMMERR_RECV;
 	}
 
 	buf[recieved] = '\0';
@@ -68,10 +70,73 @@ int set_destination(struct sockaddr_in * addr_to_set)
 	return 0;
 }
 
-CommErr send_sender_and_recipient(fd_t)
+static CommErr send_recicpient(fd_t fd)
 {
+	constexpr size_t buflen = 99;
+	char buf[buflen + 1];
 
+	fputs("Почтовый адрес получателя: ", stdout);
+	if (scanf("%95s", buf) < 0) {
+		return COMMERR_EOF;
+	}
+	strcat(buf, CRLF);
+
+	if (send(fd, "MAIL FROM: ", 11, 0) < 0) {
+		return COMMERR_SEND;
+	}
+	if (send(fd, buf, strlen(buf), 0) < 0) {
+		return COMMERR_SEND;
+	}
+
+	ssize_t recieved = recv(fd, buf, buflen, 0);
+	if (recieved < 0) {
+		return COMMERR_RECV;
+	}
+	buf[recieved] = '\0';
+
+	if (!strncmp(buf, COMMAND_OK_CODE, strlen(COMMAND_OK_CODE))) {
+		return COMMERR_OK;
+	}
+	return COMMERR_BAD_MAIL_DEST;
 }
+
+static CommErr send_sender(fd_t fd)
+{
+	constexpr size_t buflen = 99;
+	char buf[buflen + 1];
+
+	fputs("Почтовый адрес отправителя: ", stdout);
+	if (scanf("%95s", buf) < 0) {
+		return COMMERR_EOF;
+	}
+	strcat(buf, CRLF);
+
+	if (send(fd, "MAIL FROM: ", 11, 0) < 0) {
+		return COMMERR_SEND;
+	}
+	if (send(fd, buf, strlen(buf), 0) < 0) {
+		return COMMERR_SEND;
+	}
+
+	ssize_t recieved = recv(fd, buf, buflen, 0);
+	if (recieved < 0) {
+		return COMMERR_RECV;
+	}
+	buf[recieved] = '\0';
+
+	if (strncmp(buf, COMMAND_OK_CODE, strlen(COMMAND_OK_CODE))) {
+		return COMMERR_BAD_MAIL_SOURCE;
+	}
+
+	return COMMERR_OK;
+}
+
+CommErr send_sender_and_recipient(fd_t fd)
+{
+	CommErr res = send_sender(fd);
+	return (res != COMMERR_OK) ? res : send_recicpient(fd);
+}
+
 /*
 static int quit(fd_t cmd_sock)
 {
