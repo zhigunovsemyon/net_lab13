@@ -2,6 +2,7 @@
 
 #include <arpa/inet.h>
 #include <assert.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,8 +14,83 @@
 constexpr in_port_t DEFAULT_PORT = 25;
 
 static char const * CRLF = "\r\n";
+static char const * DATA_END = "\r\n.\r\n";
+
 static char const * CONNECT_OK_CODE = "220";
 static char const * COMMAND_OK_CODE = "250";
+static char const * DATA_TRANSFER_CONFIRMED = "354";
+
+static CommErr check_data_send_responce(fd_t fd)
+{
+	constexpr size_t buflen = 99;
+	char buf[buflen];
+
+	ssize_t recieved = recv(fd, buf, buflen, 0);
+	if (recieved < 0) {
+		return COMMERR_RECV;
+	}
+	buf[recieved] = '\0';
+
+	puts(buf);
+
+	if (strncmp(buf, COMMAND_OK_CODE, strlen(COMMAND_OK_CODE))) {
+		return COMMERR_DATA_NOT_ACCEPTED;
+	}
+	return COMMERR_OK;
+}
+
+static CommErr confirm_send_data(fd_t fd)
+{
+	constexpr size_t buflen = 99;
+	char buf[buflen];
+
+	if (send(fd, "DATA\r\n", strlen("DATA\r\n"), 0) < 0) {
+		return COMMERR_SEND;
+	}
+
+	ssize_t recieved = recv(fd, buf, buflen, 0);
+	if (recieved < 0) {
+		return COMMERR_RECV;
+	}
+	buf[recieved] = '\0';
+
+	puts(buf);
+
+	if (strncmp(buf, DATA_TRANSFER_CONFIRMED,
+		    strlen(DATA_TRANSFER_CONFIRMED))) {
+		return COMMERR_DATA_TRANSFER_NOT_CONFIRMED;
+	}
+
+	return COMMERR_OK;
+}
+
+CommErr send_data(fd_t fd, char const * data[], size_t lines)
+{
+	if (data == nullptr) {
+		return COMMERR_BAD_DATA;
+	}
+	CommErr res = confirm_send_data(fd);
+	if (res != COMMERR_OK) {
+		return res;
+	}
+
+	for (size_t i = 0; i < lines; ++i) {
+		if (data[i] == nullptr) {
+			return COMMERR_BAD_DATA;
+		}
+		if (send(fd, data[i], strlen(data[i]), 0) < 0) {
+			return COMMERR_SEND;
+		}
+		if (send(fd, CRLF, strlen(CRLF), 0) < 0) {
+			return COMMERR_SEND;
+		}
+	}
+
+	if (send(fd, DATA_END, strlen(DATA_END), 0) < 0) {
+		return COMMERR_SEND;
+	}
+	return check_data_send_responce(fd);
+}
 
 CommErr check_connection_response(fd_t fd)
 {
@@ -81,7 +157,7 @@ static CommErr send_recicpient(fd_t fd)
 	}
 	strcat(buf, CRLF);
 
-	if (send(fd, "MAIL FROM: ", 11, 0) < 0) {
+	if (send(fd, "RCPT TO: ", 9, 0) < 0) {
 		return COMMERR_SEND;
 	}
 	if (send(fd, buf, strlen(buf), 0) < 0) {
@@ -136,4 +212,3 @@ CommErr send_sender_and_recipient(fd_t fd)
 	CommErr res = send_sender(fd);
 	return (res != COMMERR_OK) ? res : send_recicpient(fd);
 }
-

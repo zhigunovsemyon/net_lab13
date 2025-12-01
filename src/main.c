@@ -17,6 +17,14 @@
 несколько строк случайного текста.
  */
 
+char const * data[] = {
+	"Date: Wed, 30 July 2019 06:04:34", //
+	"From: test@client.net",	    //
+	"Subject: How SMTP works",	    //
+	"To: user@recipient.net",	    //
+	"Body text"			    //
+};
+
 int main()
 {
 	// Структура с адресом и портом сервера
@@ -44,7 +52,10 @@ int main()
 		goto end;
 	}
 
-	comm_err = COMMERR_OK;
+	comm_err = send_data(conn_sock, data, sizeof(data) / sizeof(*data));
+	if (COMMERR_OK != comm_err) {
+		goto end;
+	}
 
 end:
 	switch (comm_err) {
@@ -54,24 +65,30 @@ end:
 		return 0;
 	case COMMERR_BAD_SERVER_HELLO:
 		fprintf(stderr, "Ошибка при подключении к серверу!");
-		close(conn_sock);
-		return 1;
+		break;
 	case COMMERR_BAD_MAIL_SOURCE:
 		fprintf(stderr, "Ошибка при указании отправителя!");
-		close(conn_sock);
-		return 1;
+		break;
 	case COMMERR_BAD_MAIL_DEST:
 		fprintf(stderr, "Ошибка при указании получателя!");
-		close(conn_sock);
-		return 1;
+		break;
 	case COMMERR_SEND:
 	case COMMERR_RECV:
 		perror("");
-		close(conn_sock);
-		return -1;
+		break;
+	case COMMERR_DATA_TRANSFER_NOT_CONFIRMED:
+		fprintf(stderr, "Почтовый сервер отказался получать данные!");
+		break;
+	case COMMERR_BAD_DATA:
+		fprintf(stderr, "Переданы некорректные данные!");
+		break;
+	case COMMERR_DATA_NOT_ACCEPTED:
+		fprintf(stderr, "Почтовый сервер отказался передавать данные!");
+		break;
 	default:
 		fputs("Неизвестная ошибка!", stderr);
-		close(conn_sock);
-		return 1;
+		break;
 	}
+	close(conn_sock);
+	return -1;
 }
